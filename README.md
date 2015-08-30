@@ -1,0 +1,2 @@
+# pivot
+Automated Mathematical Deduction
