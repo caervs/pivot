@@ -16,14 +16,14 @@ class SymbolicExpression(Replicable):
                                 SymbolicExpression.from_symbol(other))
 
     def __radd__(self, other):
-        return self + other
+        return SymbolicExpression.from_symbol(other) + self
 
     def __mul__(self, other):
         return SymbolicCompound(operator.mul, self,
                                 SymbolicExpression.from_symbol(other))
 
     def __rmul__(self, other):
-        return self * other
+        return SymbolicExpression.from_symbol(other) * self
 
 
 class SymbolicPrimitive(SymbolicExpression):
@@ -40,6 +40,10 @@ class SymbolicPrimitive(SymbolicExpression):
     def __hash__(self):
         return hash((self.symbol, self.negated))
 
+    def __str__(self):
+        return str(self.symbol)
+
+
 class SymbolicCompound(SymbolicExpression):
     @preprocessor
     def preprocess(operation, left_operand, right_operand):
@@ -51,6 +55,15 @@ class SymbolicCompound(SymbolicExpression):
 
     def __hash__(self):
         return hash((self.operation, self.left_operand, self.right_operand))
+
+    def __str__(self):
+        if self.operation == operator.add:
+            return "%s + %s" % (self.left_operand, self.right_operand)
+        elif self.operation == operator.mul:
+            return "%s*%s" % (self.left_operand, self.right_operand)
+        else:
+            raise ValueError(self.operation)
+
 
 class Equation(Replicable):
     @preprocessor
@@ -64,6 +77,7 @@ class Equation(Replicable):
     def __repr__(self):
         # TODO this should be in replicate
         return "<Equation: %s = %s>" % (self.left_expression, self.right_expression)
+
 
 class EquationAccumulator(dict):
     def __init__(self):
@@ -103,5 +117,5 @@ class EquationSet(set):
 @EquationSet
 def foobar(x, y, z):
     x = 1
-    y = x + 1
-    z = y + 1
+    y = 2*x + 1
+    z = 3*y + 4*x + 5
