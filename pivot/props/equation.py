@@ -18,12 +18,25 @@ class SymbolicExpression(Replicable):
     def __radd__(self, other):
         return SymbolicExpression.from_symbol(other) + self
 
+    def __sub__(self, other):
+        return SymbolicCompound(operator.sub, self,
+                                SymbolicExpression.from_symbol(other))
+
+    def __rsub__(self, other):
+        return SymbolicCompound(operator.sub,
+                                SymbolicExpression.from_symbol(other),
+                                self)
+
     def __mul__(self, other):
         return SymbolicCompound(operator.mul, self,
                                 SymbolicExpression.from_symbol(other))
 
     def __rmul__(self, other):
         return SymbolicExpression.from_symbol(other) * self
+
+    def __truediv__(self, other):
+        return SymbolicCompound(operator.truediv, self,
+                                SymbolicExpression.from_symbol(other))
 
 
 class SymbolicPrimitive(SymbolicExpression):
@@ -43,10 +56,14 @@ class SymbolicPrimitive(SymbolicExpression):
     def __str__(self):
         return str(self.symbol)
 
+    def __repr__(self):
+        return str(self)
+
 
 class SymbolicCompound(SymbolicExpression):
     @preprocessor
     def preprocess(operation, left_operand, right_operand):
+        # TODO compounds should be negatable
         pass
 
     def value_in_scope(self, scope):
@@ -84,7 +101,9 @@ class EquationAccumulator(dict):
         self.equations = set()
 
     def __setitem__(self, key, value):
-        self.equations.add(Equation(key, value))
+        symbolic_key = SymbolicExpression.from_symbol(key)
+        symbolic_value = SymbolicExpression.from_symbol(value)
+        self.equations.add(Equation(symbolic_key, symbolic_value))
 
 
 class EquationSet(set):
@@ -96,26 +115,37 @@ class EquationSet(set):
             super().__init__(map(Equation, equations))
 
     def update_from_function(self, f):
+        # TODO refactor XXX
         equations = set()
         source_lines, start_line = inspect.getsourcelines(f)
-        def_lines = [index for index, line in enumerate(source_lines)
-                     if line.startswith("def ")]
         # TODO there must be a cleaner way to get the function body
-        body = source_lines[def_lines[0] + 1:]
+        indentation = 0
+
+        for c in source_lines[0]:
+            if c.isspace():
+                indentation += 1
+            else:
+                break
+
+        dedented_lines = [line[indentation:] for line in source_lines]
+        def_lines = [index for index, line in enumerate(dedented_lines)
+                     if line.startswith("def ")]
+        body_lines = dedented_lines[def_lines[0] + 1:]
+
+        body_indentation = 0
+
+        for c in body_lines[0]:
+            if c.isspace():
+                body_indentation += 1
+            else:
+                break
+
+        dedented_body = "".join(body_line[body_indentation:] for body_line in body_lines)
+
         eval_scope = EquationAccumulator()
         # HACK will have to fix for equation set methods
-        indentation = 4
-        unindented_body = "".join(line[indentation:] for line in body)
         func_args = inspect.getargspec(f).args
         global_scope = {arg_name: SymbolicExpression.from_symbol(arg_name)
                         for arg_name in func_args}
-        exec(unindented_body, global_scope, eval_scope)
-        print("eval_scope is", eval_scope.equations)
-
-# initial tests of decorator
-
-@EquationSet
-def foobar(x, y, z):
-    x = 1
-    y = 2*x + 1
-    z = 3*y + 4*x + 5
+        exec(dedented_body, global_scope, eval_scope)
+        self.update(eval_scope.equations)
