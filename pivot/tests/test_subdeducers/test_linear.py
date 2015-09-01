@@ -1,6 +1,6 @@
 import unittest
 
-from pivot.props.equation import EquationSet, SymbolicPrimitive
+from pivot.props.equation import EquationSet, SymbolDict
 from pivot.subdeducers.linear import LinearDeducer, Matrix, Vector
 
 
@@ -76,6 +76,7 @@ class MutatingOperations(VectorTestCase):
 class LinearDeducerTestCase(unittest.TestCase):
     def setUp(self):
         self.deducer = LinearDeducer()
+        self.sd = SymbolDict()
 
 
 class ExampleSolutions(LinearDeducerTestCase):
@@ -103,7 +104,12 @@ class ExampleSolutions(LinearDeducerTestCase):
             x = (7 - 5*y - 6*z) / 3
             x = (8 - 4*y - 3*z) / 2
 
-        raise Exception(self.deducer.solve_equation_set(example_eqset))
+        solution = self.deducer.solve_equation_set(example_eqset)
+        self.assertEqual(solution, {
+            self.sd.x: -15,
+            self.sd.y: 8,
+            self.sd.z: 2,
+        })
 
 
 class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
@@ -114,7 +120,7 @@ class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
 
         equation, = eqset
         left_coefficients = self.deducer.coefficients_of_expression(equation.left_expression)
-        self.assertEqual(left_coefficients, {SymbolicPrimitive('x'): 1})
+        self.assertEqual(left_coefficients, {self.sd.x: 1})
 
         right_coefficients = self.deducer.coefficients_of_expression(equation.right_expression)
         self.assertEqual(right_coefficients, {1: 1})
@@ -126,7 +132,7 @@ class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
 
         equation, = eqset
         right_coefficients = self.deducer.coefficients_of_expression(equation.right_expression)
-        self.assertEqual(right_coefficients, {SymbolicPrimitive('y'): 1})
+        self.assertEqual(right_coefficients, {self.sd.y: 1})
 
     def test_single_sandwiched_variable(self):
         @EquationSet
@@ -135,7 +141,7 @@ class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
 
         equation, = eqset
         right_coefficients = self.deducer.coefficients_of_expression(equation.right_expression)
-        self.assertEqual(right_coefficients, {SymbolicPrimitive('y'): 6})
+        self.assertEqual(right_coefficients, {self.sd.y: 6})
 
 
     def test_dual_sandwiched_variables(self):
@@ -146,8 +152,8 @@ class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
         equation, = eqset
         right_coefficients = self.deducer.coefficients_of_expression(equation.right_expression)
         self.assertEqual(right_coefficients, {
-            SymbolicPrimitive('y'): 6,
-            SymbolicPrimitive('z'): 100,
+            self.sd.y: 6,
+            self.sd.z: 100,
         })
 
     def test_dual_sandwiched_variables_with_multiplier(self):
@@ -158,8 +164,8 @@ class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
         equation, = eqset
         right_coefficients = self.deducer.coefficients_of_expression(equation.right_expression)
         self.assertEqual(right_coefficients, {
-            SymbolicPrimitive('y'): 24,
-            SymbolicPrimitive('z'): 400,
+            self.sd.y: 24,
+            self.sd.z: 400,
         })
 
     def test_dual_sandwiched_variables_with_divider(self):
@@ -170,7 +176,7 @@ class ExtractsCoefficientsFromExpression(LinearDeducerTestCase):
         equation, = eqset
         right_coefficients = self.deducer.coefficients_of_expression(equation.right_expression)
         self.assertEqual(right_coefficients, {
-            SymbolicPrimitive('y'): 3,
-            SymbolicPrimitive('z'): 50,
+            self.sd.y: 3,
+            self.sd.z: 50,
         })
 

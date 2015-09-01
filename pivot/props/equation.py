@@ -82,6 +82,11 @@ class SymbolicCompound(SymbolicExpression):
             raise ValueError(self.operation)
 
 
+class SymbolDict(object):
+    def __getattr__(self, attr_name):
+        return SymbolicPrimitive(attr_name)
+
+
 class Equation(Replicable):
     @preprocessor
     def preprocess(left_expression, right_expression):
