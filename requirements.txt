@@ -1,0 +1,2 @@
+-e git+git@github.com:caervs/pysh.git#egg=pysh
+-e git+git@github.com:caervs/replicate.git#egg=replicate
