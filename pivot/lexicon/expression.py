@@ -24,9 +24,13 @@ class Expression(Replicable):
     __rmul__ = lambda *args: OperationalExpression('*', *reversed(args))
     __rtruediv__ = lambda *args: OperationalExpression('/', *reversed(args))
 
-    def __le__(self, other):
+    def __hash__(self):
+        return hash(frozenset(self.parts.items()))
+
+    def __eq__(self, other):
         equation = importlib.import_module("pivot.lexicon.equation")
-        return equation.Equation(self, other)
+        same_exp = super().__eq__(other)
+        return equation.Equation(self, other, reflexive=same_exp)
 
 
 class Variable(Expression):

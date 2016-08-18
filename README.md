@@ -32,13 +32,13 @@ from pivot.lexicon.equation import EquationSet
 es0 = EquationSet.from_equations(x=1, y=x, z=y+x)
 ```
 
-Note that if you want to have complex expressions on both sides of the equation you'll have to use this funky notation similar to what storing looks like in Verilog
+You can also use the `==` operator which lets you get around python syntax restrictions
 
 ```python3
 es1 = EquationSet.from_equations(
-    x <= 5 - 3 * y + 2 * z,
-    3 * x <= 7 - 5 * y - 6 * z,
-    2 * x <= 8 - 4 * y - 3 * z)
+    x == 5 - 3 * y + 2 * z,
+    3 * x == 7 - 5 * y - 6 * z,
+    2 * x == 8 - 4 * y - 3 * z)
 ```
 
 Now that you have your equation sets defined pivot can find solutions for you

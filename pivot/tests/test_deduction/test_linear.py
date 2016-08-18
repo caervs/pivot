@@ -97,8 +97,8 @@ class BasicEquationSolving(LinearEngineTestCase):
         """
         x, y, z = map(expression.Variable, ["x", "y", "z"])
         eq_set = equation.EquationSet.from_equations(
-            x <= 5 - 3 * y + 2 * z,
-            x <= ((7 - 5 * y - 6 * z) / 3),
-            x <= ((8 - 4 * y - 3 * z) / 2), )
+            x == 5 - 3 * y + 2 * z,
+            x == ((7 - 5 * y - 6 * z) / 3),
+            x == ((8 - 4 * y - 3 * z) / 2), )
         solutions = linear.LinearEngine.solve_equation_set(eq_set)
         self.assertEqual(solutions, {x: -15, y: 8, z: 2})

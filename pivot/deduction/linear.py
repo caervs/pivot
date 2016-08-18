@@ -41,8 +41,8 @@ class SumOfProducts(object):
         elif isinstance(exp, expression.Variable):
             return cls({exp: cls.mult_identity})
         elif isinstance(exp, expression.OperationalExpression):
-            return OPERATOR_MAP[exp.operator](*map(cls.from_expression,
-                                                   exp.arguments))
+            return OPERATOR_MAP[exp.operator](
+                *list(map(cls.from_expression, exp.arguments)))
         else:
             raise TypeError(type(exp))
 

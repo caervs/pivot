@@ -14,9 +14,12 @@ class Equation(RelationalStatement):
     A RelationalStatement expressing the equality of two things
     """
 
+    def __bool__(self):
+        return self.reflexive
+
     @preprocessor
-    def preprocess(subj, obj):
-        return dict(subj=subj, obj=obj, relation_name='=')
+    def preprocess(subj, obj, reflexive=False):
+        return dict(subj=subj, obj=obj, relation_name='=', reflexive=reflexive)
 
 
 class EquationSet(set):
