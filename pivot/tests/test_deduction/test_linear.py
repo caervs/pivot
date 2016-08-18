@@ -5,6 +5,7 @@ Unit tests for the linear deduction engine
 import unittest
 
 from pivot.deduction import linear
+from pivot.interface.shortcuts import PV, V
 from pivot.lexicon import equation
 from pivot.lexicon import expression
 
@@ -102,3 +103,75 @@ class BasicEquationSolving(LinearEngineTestCase):
             x == ((8 - 4 * y - 3 * z) / 2), )
         solutions = linear.LinearEngine.solve_equation_set(eq_set)
         self.assertEqual(solutions, {x: -15, y: 8, z: 2})
+
+
+class PlanarEngineTestCase(unittest.TestCase):
+    """
+    Abstract base class for cases testing the planar deduction engine
+    """
+    pass
+
+
+class BasicPlanarEquationSolving(PlanarEngineTestCase):
+    """
+    Test basic linear equation solving
+    """
+
+    def test_simple_equation(self):
+        """
+        simple test of planar equation solving
+        """
+        v1, v2 = map(expression.Variable, ["v1", "v2"])
+        eq_set = equation.EquationSet.from_equations(v1=V(1, 2), v2=V(3, 4))
+        solutions = linear.PlanarEngine.solve_equation_set(eq_set)
+        self.assertEqual(solutions, {v1: PV(1, 2), v2: PV(3, 4)})
+
+    def test_medium_equation(self):
+        """
+        medium complexity test of planar equation solving
+        """
+        v1, v2, v3 = map(expression.Variable, ["v1", "v2", "v3"])
+        eq_set = equation.EquationSet.from_equations(
+            v1 == V(5, 5) - 3 * v2 + 2 * v3,
+            v1 == ((V(7, 7) - 5 * v2 - 6 * v3) / 3),
+            v1 == ((V(8, 8) - 4 * v2 - 3 * v3) / 2), )
+        solutions = linear.PlanarEngine.solve_equation_set(eq_set)
+        self.assertEqual(solutions, {
+            v1: PV(-15, -15),
+            v2: PV(8, 8),
+            v3: PV(2, 2),
+        })
+
+
+class BasicExpressionEvaluation(PlanarEngineTestCase):
+    """
+    Test PlanarEngine evaluate_expression method
+    """
+
+    def test_single_var_expression(self):
+        """
+        test evaluating a single expression
+        """
+        v1 = expression.Variable("v1")
+        actual = linear.PlanarEngine.evaluate_expression(v1, {v1: 1})
+        self.assertEqual(1, actual)
+
+    def test_vector_expression(self):
+        """
+        test a vector expression consisting of attr expressions
+        """
+        v1, v2 = map(expression.Variable, ["v1", "v2"])
+        vecexp = V(v1.x, v2.y)
+        context = {v1: PV(1, 2), v2: PV(3, 4)}
+        actual = linear.PlanarEngine.evaluate_expression(vecexp, context)
+        self.assertEqual(PV(1, 4), actual)
+
+    def test_operation(self):
+        """
+        test an operation expression
+        """
+        v1, v2 = map(expression.Variable, ["v1", "v2"])
+        opexp = v1 + v2
+        context = {v1: PV(1, 2), v2: PV(3, 4)}
+        actual = linear.PlanarEngine.evaluate_expression(opexp, context)
+        self.assertEqual(PV(4, 6), actual)

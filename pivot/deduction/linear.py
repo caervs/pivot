@@ -8,6 +8,7 @@ import operator
 from pivot.interface.deducer import SolvingEngine
 from pivot.lexicon import expression
 from pivot.ontology import matrix
+from pivot.ontology import plane
 
 OPERATOR_MAP = {
     '+': operator.add,
@@ -132,3 +133,113 @@ class LinearEngine(SolvingEngine):
 
         reduced = matrix.AugmentedMatrix(rows).reduced_form
         return dict(zip(variables, reduced.constants))
+
+
+class PlanarEngine(LinearEngine):
+    """
+    Deduction engine for solving linear systems consisting of 2d vectors
+    """
+
+    @classmethod
+    def solve_equation_set(cls, eq_set):
+        split_eq_set = set()
+        for equation in eq_set:
+            split_subj = cls.split_expression(equation.subj)
+            split_obj = cls.split_expression(equation.obj)
+            if len(split_subj) != len(split_obj):
+                raise ValueError("Mixing vector and scalar expressions")
+            for subj_part, obj_part in zip(split_subj, split_obj):
+                split_eq_set.add(subj_part == obj_part)
+        split_solutions = super().solve_equation_set(split_eq_set)
+        vector_variables = {
+            component.variable
+            for component in split_solutions
+        }
+        return {
+            vector_variable: plane.PlaneVector(
+                (split_solutions[vector_variable.x],
+                 split_solutions[vector_variable.y]))
+            for vector_variable in vector_variables
+        }
+
+    @classmethod
+    def _split_operational_expression(cls, exp):
+        if exp.operator == "/":
+            # TODO are expressions like 1 / 2 / 3 composed into single OE?
+            divisor = cls.split_expression(exp.arguments[1])
+            if len(divisor) != 1:
+                raise ValueError("Cannot divide by vector")
+            return [
+                subexp / divisor[0]
+                for subexp in cls.split_expression(exp.arguments[0])
+            ]
+        elif exp.operator == "*":
+            scalar = cls.split_expression(exp.arguments[0])
+            if len(scalar) != 1:
+                raise ValueError("Cannot multiply by vector")
+            return [
+                scalar[0] * subexp
+                for subexp in cls.split_expression(exp.arguments[1])
+            ]
+
+        subexpressions = list(map(cls.split_expression, exp.arguments))
+        lengths = list(map(len, subexpressions))
+        if min(lengths) != max(lengths):
+            raise ValueError("Mixing vector and scalar expressions",
+                             subexpressions, exp)
+        components = []
+        for i in range(min(lengths)):
+            components.append(
+                expression.OperationalExpression(exp.operator, *(subexpression[
+                    i] for subexpression in subexpressions)))
+        return components
+
+    @classmethod
+    def split_expression(cls, exp):
+        """
+        Given an expression for a planar vector returns a list [x, y] where x
+        evaluates to the x component of the vector and y likewise
+        """
+        if not isinstance(exp, expression.Expression):
+            return [exp]
+        elif isinstance(exp, expression.Vector):
+            return list(exp.items)
+        elif isinstance(exp, expression.Variable):
+            if isinstance(exp, expression.VariableAttribute) \
+               and exp.attr_name in ('x', 'y'):
+                return [exp]
+            else:
+                return [exp.x, exp.y]
+        elif isinstance(exp, expression.OperationalExpression):
+            return cls._split_operational_expression(exp)
+        else:
+            raise TypeError(type(exp))
+
+    @classmethod
+    def evaluate_expression(cls, exp, values):
+        """
+        return the value of an expression given values for its subexpressions
+        """
+        if not isinstance(exp, expression.Expression):
+            return exp
+        elif isinstance(exp, expression.Vector):
+            if exp in values:
+                return values[exp]
+            else:
+                return plane.PlaneVector((
+                    cls.evaluate_expression(exp.items[0], values),
+                    cls.evaluate_expression(exp.items[1], values), ))
+        elif isinstance(exp, expression.Variable):
+            if isinstance(exp, expression.VariableAttribute) \
+               and exp.attr_name in ('x', 'y'):
+                return getattr(values[exp.variable], exp.attr_name)
+            else:
+                return values[exp]
+        elif isinstance(exp, expression.OperationalExpression):
+            subvalues = [
+                cls.evaluate_expression(subexp, values)
+                for subexp in exp.arguments
+            ]
+            return OPERATOR_MAP[exp.operator](*subvalues)
+        else:
+            raise TypeError(type(exp))

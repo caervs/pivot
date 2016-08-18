@@ -48,6 +48,27 @@ class Variable(Expression):
     def __repr__(self):
         return self.name
 
+    def __getattr__(self, attr_name):
+        if attr_name.startswith("_"):
+            return getattr(super(), attr_name)
+        return VariableAttribute(self, attr_name)
+
+
+class VariableAttribute(Variable):
+    """
+    The attribute of a variable (which is also a variable)
+    """
+
+    @preprocessor
+    def preprocess(variable, attr_name):
+        """
+        Preprocess VariableAttribute attributes
+        """
+        pass
+
+    def __repr__(self):
+        return "{}.{}".format(self.variable, self.attr_name)
+
 
 class OperationalExpression(Expression):
     """
@@ -64,3 +85,20 @@ class OperationalExpression(Expression):
     def __repr__(self):
         delimiter = " {} ".format(self.operator)
         return delimiter.join(map(repr, self.arguments))
+
+
+class Vector(Expression):
+    """
+    An expression denoting an ontological Vector (i.e. an expression that is an
+    enumeration of subexpressions)
+    """
+
+    @preprocessor
+    def preprocess(*items):
+        """
+        Preprocess Vector attributes
+        """
+        pass
+
+    def __repr__(self):
+        return "V({})".format(", ".join(map(repr, self.items)))

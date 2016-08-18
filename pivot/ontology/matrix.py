@@ -79,7 +79,7 @@ def vector_product(v1, v2):
     return dot_product(v1, v2)
 
 
-class Vector(list):
+class Vector(tuple):
     """
     An arrangement of elements which when composed with a mathematical operation
     will do a point-wise application of that operation
@@ -97,9 +97,9 @@ class Matrix(Vector):
     A vector of vectors of equal length
     """
 
-    def __init__(self, rows):
-        self.validate(rows)
-        super().__init__(map(Vector, rows))
+    def __new__(cls, rows):
+        cls.validate(rows)
+        return super().__new__(cls, map(Vector, rows))
 
     def __mul__(self, other):
         # TODO implement

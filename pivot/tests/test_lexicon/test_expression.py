@@ -4,6 +4,7 @@ Unit tests for the expression module
 
 from fractions import Fraction
 
+from pivot.interface.shortcuts import V
 from pivot.lexicon import expression
 
 
@@ -70,4 +71,14 @@ class TestExpressionsComposition(ExpressionTestCase):
         v1, v2 = map(expression.Variable, ["v1", "v2"])
         exp = (v1 + v2) / (v1 - v2)
         expected_exp = oe('/', oe('+', v1, v2), oe('-', v1, v2))
+        self.assert_equal(exp, expected_exp)
+
+    def test_compose_vectors_with_attrs(self):
+        """
+        Test a composing expression that has vectors with variable attributes
+        """
+        oe = expression.OperationalExpression
+        v1, v2 = map(expression.Variable, ["v1", "v2"])
+        exp = 1 + V(v1.x, v2.y)
+        expected_exp = oe('+', 1, V(v1.x, v2.y))
         self.assert_equal(exp, expected_exp)

@@ -39,6 +39,19 @@ class EquationSet(set):
         return cls.from_equations(**eq_dict)
 
     @classmethod
+    def from_set_def(cls, es_def, scope=None):
+        """
+        Create an EquationSet from a dict mapping variable names to expressions
+        """
+        expected_arg_names = list(inspect.signature(es_def).parameters)
+        if scope is None:
+            args = {name: Variable(name) for name in expected_arg_names}
+        else:
+            args = {name: getattr(scope, name) for name in expected_arg_names}
+        eq_set = es_def(**args)
+        return cls.from_equations(*eq_set)
+
+    @classmethod
     def from_equations(cls, *equations, **monov_eqs):
         """
         Create an EquationSet from an iterable of equations
