@@ -43,8 +43,9 @@ class EquationSet(set):
         """
         Create an EquationSet from an iterable of equations
         """
-        return cls(equations + tuple(cls.equation_class(
-            Variable(subj), obj) for subj, obj in monov_eqs.items()))
+        return cls(equations + tuple(
+            cls.equation_class(Variable(subj), obj)
+            for subj, obj in monov_eqs.items()))
 
     # TODO consier adding just "from_def" which will evaluate function
     # body as if it were a set of equations

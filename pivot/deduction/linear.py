@@ -71,9 +71,10 @@ class SumOfProducts(object):
         return type(self)(coefficients)
 
     def __neg__(self):
-        return type(self)({efficient: -coefficient
-                           for efficient, coefficient in
-                           self.coefficients.items()})
+        return type(self)({
+            efficient: -coefficient
+            for efficient, coefficient in self.coefficients.items()
+        })
 
     def __sub__(self, other):
         return self + (-other)
@@ -90,8 +91,10 @@ class SumOfProducts(object):
         if set(other.coefficients.keys()) != {self.mult_identity}:
             raise ValueError("Division of expressions not supported")
         divisor = other.coefficients[self.mult_identity]
-        return type(self)({eff: matrix.divide(coe, divisor)
-                           for eff, coe in self.coefficients.items()})
+        return type(self)({
+            eff: matrix.divide(coe, divisor)
+            for eff, coe in self.coefficients.items()
+        })
 
 
 class LinearEngine(SolvingEngine):
@@ -118,8 +121,10 @@ class LinearEngine(SolvingEngine):
                                                    add_identity))
             old_variables = set(variables + [mult_identity])
             variables.extend(set(coefficients) - old_variables)
-            matrix_entries.append([coefficients.get(variable, add_identity)
-                                   for variable in variables])
+            matrix_entries.append([
+                coefficients.get(variable, add_identity)
+                for variable in variables
+            ])
         rows = []
         for index, entry in enumerate(matrix_entries):
             zeroes = [add_identity] * (len(variables) - len(entry))

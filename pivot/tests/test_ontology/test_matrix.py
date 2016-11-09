@@ -24,8 +24,7 @@ class TestReduction(MatrixTestCase):
         """
         a simple test of row reduction
         """
-        mat = matrix.AugmentedMatrix([
-            [1, 3, -2, 5], [3, 5, 6, 7], [2, 4, 3, 8]
-        ])
+        mat = matrix.AugmentedMatrix([[1, 3, -2, 5], [3, 5, 6, 7],
+                                      [2, 4, 3, 8]])
         self.assertEqual(mat.reduced_form.constants,
                          matrix.Vector([-15, 8, 2]))
