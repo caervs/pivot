@@ -2,6 +2,7 @@
 Linear deduction engine and related tools
 """
 
+import enum
 import itertools
 import operator
 
@@ -16,6 +17,14 @@ OPERATOR_MAP = {
     '*': operator.mul,
     '/': operator.truediv,
 }
+
+
+class SolutionMethod(enum.Enum):
+    """
+    A method to use when solving a linear system
+    """
+    BUILTIN = 0
+    NUMPY = 1
 
 
 class SumOfProducts(object):
@@ -104,11 +113,20 @@ class LinearEngine(SolvingEngine):
     """
     parsed_expression_class = SumOfProducts
 
+    # TODO refactor
     @classmethod
-    def solve_equation_set(cls, eq_set):
+    def solve_equation_set(cls, eq_set, method=SolutionMethod.NUMPY):  # pylint: disable=R0914
         """
         Return the solutions of a linear system as a dict mapping
         Variables to values
+
+        Takes an optional method to use to solve the equation set
+        Options are:
+          - NUMPY: solve using numpy. This will convert all constants
+                   to floats so it is only recommended if you are not
+                   using a custom field
+          - BUILTN: works with custom fields but is buggy so use with
+                    caution
         """
         mult_identity = cls.parsed_expression_class.mult_identity
         add_identity = cls.parsed_expression_class.add_identity
@@ -131,8 +149,20 @@ class LinearEngine(SolvingEngine):
             zeroes = [add_identity] * (len(variables) - len(entry))
             rows.append(entry + zeroes + [augmentations[index]])
 
-        reduced = matrix.AugmentedMatrix(rows).reduced_form
-        return dict(zip(variables, reduced.constants))
+        if method == SolutionMethod.BUILTIN:
+            # TODO investigate bug with BUILTIN method and return
+            # to default when done
+            reduced = matrix.AugmentedMatrix(rows).reduced_form
+            return dict(zip(variables, reduced.constants))
+        elif method == SolutionMethod.NUMPY:
+            from numpy import array
+            from numpy.linalg import solve
+            mat = array(list(list(map(float, row[:-1])) for row in rows))
+            constants = array(list(list(map(float, row[-1:])) for row in rows))
+            solutions = [row[0] for row in solve(mat, constants)]
+            return dict(zip(variables, solutions))
+        else:
+            raise ValueError(method)
 
 
 class PlanarEngine(LinearEngine):
@@ -141,7 +171,7 @@ class PlanarEngine(LinearEngine):
     """
 
     @classmethod
-    def solve_equation_set(cls, eq_set):
+    def solve_equation_set(cls, eq_set, method=SolutionMethod.NUMPY):
         split_eq_set = set()
         for equation in eq_set:
             split_subj = cls.split_expression(equation.subj)
@@ -150,7 +180,8 @@ class PlanarEngine(LinearEngine):
                 raise ValueError("Mixing vector and scalar expressions")
             for subj_part, obj_part in zip(split_subj, split_obj):
                 split_eq_set.add(subj_part == obj_part)
-        split_solutions = super().solve_equation_set(split_eq_set)
+        split_solutions = super().solve_equation_set(
+            split_eq_set, method=method)
         vector_variables = {
             component.variable
             for component in split_solutions

@@ -32,6 +32,15 @@ class Expression(Replicable):
         same_exp = super().__eq__(other)
         return equation.Equation(self, other, reflexive=same_exp)
 
+    @property
+    def variables(self):
+        """
+        Return all variables in the Expression
+
+        Must be implemented by individual subclasses
+        """
+        raise NotImplementedError
+
 
 class Variable(Expression):
     """
@@ -53,11 +62,36 @@ class Variable(Expression):
             return getattr(super(), attr_name)
         return VariableAttribute(self, attr_name)
 
+    @property
+    def variables(self):
+        """
+        Return all variables in the Variable (namely a set with itself)
+        """
+        return {self}
+
+    @property
+    def attr_chain(self):
+        """
+        Return a tuple of variable names starting with the
+        root variable name and appending each successive
+        attribute name
+        """
+        return (self.name, )
+
 
 class VariableAttribute(Variable):
     """
     The attribute of a variable (which is also a variable)
     """
+
+    @property
+    def attr_chain(self):
+        """
+        Return a tuple of variable names starting with the
+        root variable name and appending each successive
+        attribute name
+        """
+        return self.variable.attr_chain + (self.attr_name, )
 
     @preprocessor
     def preprocess(variable, attr_name):
@@ -86,6 +120,15 @@ class OperationalExpression(Expression):
         delimiter = " {} ".format(self.operator)
         return delimiter.join(map(repr, self.arguments))
 
+    @property
+    def variables(self):
+        """
+        Return all variables in the expression
+        """
+        isexpression = lambda arg: isinstance(arg, Expression)
+        expressions = filter(isexpression, self.arguments)
+        return set().union(*(arg.variables for arg in expressions))
+
 
 class Vector(Expression):
     """
@@ -102,3 +145,12 @@ class Vector(Expression):
 
     def __repr__(self):
         return "V({})".format(", ".join(map(repr, self.items)))
+
+    @property
+    def variables(self):
+        """
+        Return all variables in the expression
+        """
+        isexpression = lambda arg: isinstance(arg, Expression)
+        expressions = filter(isexpression, self.items)
+        return set().union(*(item.variables for item in expressions))

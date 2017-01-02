@@ -21,6 +21,13 @@ class Equation(RelationalStatement):
     def preprocess(subj, obj, reflexive=False):
         return dict(subj=subj, obj=obj, relation_name='=', reflexive=reflexive)
 
+    @property
+    def variables(self):
+        """
+        Return all variables in the Equation
+        """
+        return self.subj.variables | self.obj.variables
+
 
 class EquationSet(set):
     """
@@ -59,6 +66,13 @@ class EquationSet(set):
         return cls(equations + tuple(
             cls.equation_class(Variable(subj), obj)
             for subj, obj in monov_eqs.items()))
+
+    @property
+    def variables(self):
+        """
+        Return all variables in the EquationSet
+        """
+        return set().union(*(equation.variables for equation in self))
 
     # TODO consier adding just "from_def" which will evaluate function
     # body as if it were a set of equations

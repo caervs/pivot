@@ -89,7 +89,8 @@ class BasicEquationSolving(LinearEngineTestCase):
         """
         x, y = map(expression.Variable, ["x", "y"])
         eq_set = equation.EquationSet.from_equations(x=1, y=x)
-        solutions = linear.LinearEngine.solve_equation_set(eq_set)
+        solutions = linear.LinearEngine.solve_equation_set(
+            eq_set, method=linear.SolutionMethod.BUILTIN)
         self.assertEqual(solutions, {x: 1, y: 1})
 
     def test_medium_equation(self):
@@ -101,7 +102,8 @@ class BasicEquationSolving(LinearEngineTestCase):
             x == 5 - 3 * y + 2 * z,
             x == ((7 - 5 * y - 6 * z) / 3),
             x == ((8 - 4 * y - 3 * z) / 2), )
-        solutions = linear.LinearEngine.solve_equation_set(eq_set)
+        solutions = linear.LinearEngine.solve_equation_set(
+            eq_set, method=linear.SolutionMethod.BUILTIN)
         self.assertEqual(solutions, {x: -15, y: 8, z: 2})
 
 
@@ -123,7 +125,8 @@ class BasicPlanarEquationSolving(PlanarEngineTestCase):
         """
         v1, v2 = map(expression.Variable, ["v1", "v2"])
         eq_set = equation.EquationSet.from_equations(v1=V(1, 2), v2=V(3, 4))
-        solutions = linear.PlanarEngine.solve_equation_set(eq_set)
+        solutions = linear.PlanarEngine.solve_equation_set(
+            eq_set, method=linear.SolutionMethod.BUILTIN)
         self.assertEqual(solutions, {v1: PV(1, 2), v2: PV(3, 4)})
 
     def test_medium_equation(self):
@@ -135,7 +138,8 @@ class BasicPlanarEquationSolving(PlanarEngineTestCase):
             v1 == V(5, 5) - 3 * v2 + 2 * v3,
             v1 == ((V(7, 7) - 5 * v2 - 6 * v3) / 3),
             v1 == ((V(8, 8) - 4 * v2 - 3 * v3) / 2), )
-        solutions = linear.PlanarEngine.solve_equation_set(eq_set)
+        solutions = linear.PlanarEngine.solve_equation_set(
+            eq_set, method=linear.SolutionMethod.BUILTIN)
         self.assertEqual(solutions, {
             v1: PV(-15, -15),
             v2: PV(8, 8),
